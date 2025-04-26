@@ -1,0 +1,28 @@
+
+# Stages
+HC == #368716
+MGUS == #D27D46
+SMM == #D92F5E
+MM == #8D4E85
+
+# Cytogenetics 
+t(4;14) == #ED90A4
+t(14;16) == #C699E7
+1q aberration == #C0AB52
+17p del == #4FBF85
+1p del == #28BBD7
+neutral == white
+
+# Differential Analysis
+Up-regualted == #D7342A
+Non-differential == white
+Down-regulated == #4475B3
+
+# TF ranking 
+OR == bisque3
+OR_inv == bisque4
+DE_logFC == darkslategray
+chromVAR_logFC == azure4
+NES_pos == darkslategray1
+NES_neg == darkturquoise
+NES_abs == deepskyblue3

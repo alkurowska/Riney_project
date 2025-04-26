@@ -73,14 +73,15 @@ enhancers <- enhancers[!is.na(enhancers$gene_ID),]
 dim(enhancers) # # 13878 OCRs mapping in enhancer regions 
 summary(is.na(enhancers$peak_ID))
 
-# Are there any peaks in promoters and enhancers
-summary(enhancers$peak_ID %in% promoters$name) # NO
-
-
+promoters$name <- paste0(promoters$seqnames, "_", promoters$start, "_", promoters$end)
 # Create OCR_gene pairs for promoters and enhancers
 promoters <- promoters[,c("name", "ENSEMBL")]
 colnames(promoters) <- c("peak_ID", "gene_ID")
 enhancers <- enhancers[,c("peak_ID", "gene_ID")]
+
+# Are there any peaks in promoters and enhancers
+summary(enhancers$peak_ID %in% promoters$name) # NO
+
 
 # Merge OCR_gene pairs
 OCR_gene <- rbind(promoters, enhancers)
@@ -93,26 +94,30 @@ setwd("/ibex/user/kurowsaa/Riney_project/Mouse/Coordination/Gene_OCR")
 saveRDS(OCR_gene, file = "OCR_gene_pairs.RDS")
 # OCR_gene pairs for differential peaks
 DA_MGUS_OCR_gene <- OCR_gene[OCR_gene$peak_ID %in% all_MGUS,]
-dim(DA_MGUS_OCR_gene) # 1799 OCR-gene pairs
+dim(DA_MGUS_OCR_gene) # 870 OCR-gene pairs
 
 DA_MM_OCR_gene <- OCR_gene[OCR_gene$peak_ID %in% all_MM,]
-dim(DA_MM_OCR_gene) # 2522 OCR-gene pairs
+dim(DA_MM_OCR_gene) # 1598 OCR-gene pairs
 
+toSave <- rbind(DA_MGUS_OCR_gene, DA_MM_OCR_gene)
+# Remove duplicates
+toSave <- toSave[!duplicated(toSave$pairs),]
+# SAVE OCR_gene pairs for differential peaks
+setwd("/ibex/user/kurowsaa/Riney_project/Mouse/Coordination/Gene_OCR")
+saveRDS(toSave, file = "DA_MGUS_OCR_gene.RDS")
 
 # OCR_gene pairs for differential peaks and differential genes
 DA_MGUS_OCR_gene_DE <- DA_MGUS_OCR_gene[DA_MGUS_OCR_gene$gene_ID %in% genes_MGUS,]
-dim(DA_MGUS_OCR_gene_DE) # 590 OCR-gene pairs
+dim(DA_MGUS_OCR_gene_DE) # 140 OCR-gene pairs
 
 DA_MM_OCR_gene_DE <- DA_MM_OCR_gene[DA_MM_OCR_gene$gene_ID %in% genes_MM,]
-dim(DA_MM_OCR_gene_DE) # 1676 OCR-gene pairs
+dim(DA_MM_OCR_gene_DE) # 768 OCR-gene pairs
 
 
 # Save final intersections
 setwd("/ibex/user/kurowsaa/Riney_project/Mouse/Coordination/Gene_OCR")
 MGUS_HC <- intersect(all_MGUS, unique(DA_MGUS_OCR_gene_DE$peak_ID))
 MM_HC <- intersect(all_MM, unique(DA_MM_OCR_gene_DE$peak_ID))
-
-save(MGUS_HC, MM_HC, file = "coordination_peaks.RData")
 
 MGUS_HC <- intersect(genes_MGUS, unique(DA_MGUS_OCR_gene_DE$gene_ID))
 MM_HC <- intersect(genes_MM, unique(DA_MM_OCR_gene_DE$gene_ID))
@@ -130,55 +135,119 @@ save(MGUS_HC, MM_HC, file = "coordination_pairs.RData")
 
 
 
-# MM_HC$atac_logFC <- dea_noscore_atac[MM_HC[,1],]$logFC_MM_HC
-# MM_HC$rna_logFC <- dea_noscore_rna[MM_HC[,2],]$logFC_MM_HC
+# Load the DEA results
+setwd("/ibex/user/kurowsaa/Riney_project/Mouse/ATAC/DEA/")
+atac_results <- read.table("atac_dea_results.txt", header=TRUE, row.names=1, sep="\t")
 
-# SMM_HC$atac_logFC <- dea_atac[SMM_HC[,1],]$logFC_SMM_HC
-# SMM_HC$rna_logFC <- dea_rna[SMM_HC[,2],]$logFC_SMM_HC
+# Load the DEA results
+setwd("/ibex/user/kurowsaa/Riney_project/Mouse/RNA/DEA/")
+rna_results <- read.table("rna_dea_results.txt", header=TRUE, row.names=1, sep="\t")
 
-# MGUS_HC$atac_logFC <- dea_atac[MGUS_HC[,1],]$logFC_MGUS_HC
-# MGUS_HC$rna_logFC <- dea_rna[MGUS_HC[,2],]$logFC_MGUS_HC
+OCR_gene_final <- rbind(MGUS_HC, MM_HC)
+OCR_gene_final <- OCR_gene_final[!duplicated(OCR_gene_final$pairs),]
+dim(OCR_gene_final) # 788
 
-# # Correlation plots of logFCs
-# library(ggplot2)
+OCR_gene_final$atac_CyclindD1_MGUS <- 0
+OCR_gene_final$atac_Mmset_MGUS <- 0
+OCR_gene_final$atac_Trp53_MGUS <- 0
+OCR_gene_final$atac_MIc_MGUS <- 0
+OCR_gene_final$atac_CyclindD1_MM <- 0
+OCR_gene_final$atac_Mmset_MM <- 0
+OCR_gene_final$atac_Trp53_MM <- 0
+OCR_gene_final$atac_MIc_MM <- 0
+OCR_gene_final$atac_CyclindD1_MGUS[OCR_gene_final$peak_ID %in% rownames(atac_results)] <- atac_results[OCR_gene_final$peak_ID[OCR_gene_final$peak_ID %in% rownames(atac_results)], "sig_CyclinD1_MGUS"]
+OCR_gene_final$atac_Mmset_MGUS[OCR_gene_final$peak_ID %in% rownames(atac_results)] <- atac_results[OCR_gene_final$peak_ID[OCR_gene_final$peak_ID %in% rownames(atac_results)], "sig_Mmset_MGUS"]
+OCR_gene_final$atac_Trp53_MGUS[OCR_gene_final$peak_ID %in% rownames(atac_results)] <- atac_results[OCR_gene_final$peak_ID[OCR_gene_final$peak_ID %in% rownames(atac_results)], "sig_Trp53_MGUS"]
+OCR_gene_final$atac_MIc_MGUS[OCR_gene_final$peak_ID %in% rownames(atac_results)] <- atac_results[OCR_gene_final$peak_ID[OCR_gene_final$peak_ID %in% rownames(atac_results)], "sig_MIc_MGUS"]
+OCR_gene_final$atac_CyclindD1_MM[OCR_gene_final$peak_ID %in% rownames(atac_results)] <- atac_results[OCR_gene_final$peak_ID[OCR_gene_final$peak_ID %in% rownames(atac_results)], "sig_CyclinD1_MM"]
+OCR_gene_final$atac_Mmset_MM[OCR_gene_final$peak_ID %in% rownames(atac_results)] <- atac_results[OCR_gene_final$peak_ID[OCR_gene_final$peak_ID %in% rownames(atac_results)], "sig_Mmset_MM"]
+OCR_gene_final$atac_Trp53_MM[OCR_gene_final$peak_ID %in% rownames(atac_results)] <- atac_results[OCR_gene_final$peak_ID[OCR_gene_final$peak_ID %in% rownames(atac_results)], "sig_Trp53_MM"]
+OCR_gene_final$atac_MIc_MM[OCR_gene_final$peak_ID %in% rownames(atac_results)] <- atac_results[OCR_gene_final$peak_ID[OCR_gene_final$peak_ID %in% rownames(atac_results)], "sig_MIc_MM"]
 
-# # Function
-# cor_plot <- function(toPlot, contrast, annotation) {
-#     # keep only promoters or enhancers 
-#     if ( annotation == "promoters") {
-#         data <- toPlot[toPlot$peak_ID %in% promoters$peak_ID,]
-#     } else {
-#         data <- toPlot[toPlot$peak_ID %in% enhancers$peak_ID,]
-#     }
-#     data <- data.frame(data$atac_logFC, data$rna_logFC)
-#     rownames(data) <- 1:nrow(data)
-#     colnames(data) <- c("OCRs", "Genes")
+OCR_gene_final$rna_CyclindD1_MGUS <- 0
+OCR_gene_final$rna_Mmset_MGUS <- 0
+OCR_gene_final$rna_Trp53_MGUS <- 0
+OCR_gene_final$rna_MIc_MGUS <- 0
+OCR_gene_final$rna_CyclindD1_MM <- 0
+OCR_gene_final$rna_Mmset_MM <- 0
+OCR_gene_final$rna_Trp53_MM <- 0
+OCR_gene_final$rna_MIc_MM <- 0
+OCR_gene_final$rna_CyclindD1_MGUS[OCR_gene_final$gene_ID %in% rownames(dea_results)] <- dea_results[OCR_gene_final$gene_ID[OCR_gene_final$gene_ID %in% rownames(dea_results)], "sig_CyclinD1_MGUS"]
+OCR_gene_final$rna_Mmset_MGUS[OCR_gene_final$gene_ID %in% rownames(dea_results)] <- dea_results[OCR_gene_final$gene_ID[OCR_gene_final$gene_ID %in% rownames(dea_results)], "sig_Mmset_MGUS"]
+OCR_gene_final$rna_Trp53_MGUS[OCR_gene_final$gene_ID %in% rownames(dea_results)] <- dea_results[OCR_gene_final$gene_ID[OCR_gene_final$gene_ID %in% rownames(dea_results)], "sig_Trp53_MGUS"]
+OCR_gene_final$rna_MIc_MGUS[OCR_gene_final$gene_ID %in% rownames(dea_results)] <- dea_results[OCR_gene_final$gene_ID[OCR_gene_final$gene_ID %in% rownames(dea_results)], "sig_MIc_MGUS"]
+OCR_gene_final$rna_CyclindD1_MM[OCR_gene_final$gene_ID %in% rownames(dea_results)] <- dea_results[OCR_gene_final$gene_ID[OCR_gene_final$gene_ID %in% rownames(dea_results)], "sig_CyclinD1_MM"]
+OCR_gene_final$rna_Mmset_MM[OCR_gene_final$gene_ID %in% rownames(dea_results)] <- dea_results[OCR_gene_final$gene_ID[OCR_gene_final$gene_ID %in% rownames(dea_results)], "sig_Mmset_MM"]
+OCR_gene_final$rna_Trp53_MM[OCR_gene_final$gene_ID %in% rownames(dea_results)] <- dea_results[OCR_gene_final$gene_ID[OCR_gene_final$gene_ID %in% rownames(dea_results)], "sig_Trp53_MM"]
+OCR_gene_final$rna_MIc_MM[OCR_gene_final$gene_ID %in% rownames(dea_results)] <- dea_results[OCR_gene_final$gene_ID[OCR_gene_final$gene_ID %in% rownames(dea_results)], "sig_MIc_MM"]
 
-#     correlation_coefficient <- cor(data$OCRs, data$Genes, method = "spearman")
+head(OCR_gene_final)
 
-#     p <-  ggplot(data, aes(x = Genes, y = OCRs)) +
-#             geom_point() +  # Plot points
-#             # add line in x = 0 
-#             geom_vline(xintercept = 0, color = "black") +
-#             geom_hline(yintercept = 0, color = "black") +
-#             annotate("text", x = min(data$Genes)+0.5, y = max(data$OCRs), label = paste("rho=", round(correlation_coefficient, 5))) +
-#             xlab("Genes") + 
-#             ylab(paste0("OCRs - ", annotation)) +
-#             ggtitle(paste0("Correlation of log2FC - ", contrast)) +
-#             theme_minimal()
-#     ggsave(p, filename = paste0("correlation_",contrast, "_", annotation, ".png"), width = 10, height = 10, dpi = 300)
-#     }
+library(ggplot2)
+library(ggalluvial)
 
+setwd("/ibex/user/kurowsaa/Riney_project/Mouse/Coordination/Gene_OCR")
+# PER MODEL
+models <- c("CyclindD1", "Mmset", "Trp53", "MIc")
+# summarize the number of genes in each category
+for(i in 1:length(models)){
+    model <- models[i]
+    dynamics <- OCR_gene_final[,grep(model, colnames(OCR_gene_final))]
+    dynamics <- dynamics[rowSums(dynamics) != 0,]
 
+    toPlot <- dynamics
+    # Change 0s to "non differential"
+    toPlot[toPlot == 0] <- "Non-differential"
+    #Change -1 to "Down"
+    toPlot[toPlot == -1] <- "Down-regulated"
+    #Change 1 to "Up"
+    toPlot[toPlot == 1] <- "Up-regulated"
 
+    toPlot$Pair <- rownames(dynamics)
+    colnames(toPlot) <- gsub(paste0(model, "_"), "", colnames(toPlot))
 
+    # Reshape for ggalluvial
 
-# # correlation plot
-# setwd("/ibex/user/kurowsaa/Riney_project/Coordination/Gene_OCR/Correlations")
-# cor_plot(MGUS_HC, "MGUS_HC", "enhancers")
-# cor_plot(MGUS_HC, "MGUS_HC", "promoters")
-# cor_plot(SMM_HC, "SMM_HC", "enhancers")
-# cor_plot(SMM_HC, "SMM_HC", "promoters")
-# cor_plot(MM_HC, "MM_HC", "enhancers")
-# cor_plot(MM_HC, "MM_HC", "promoters")
+    genes_long <- tidyr::pivot_longer(
+     toPlot,
+     cols = c(atac_MGUS, atac_MM, rna_MGUS, rna_MM),
+     names_to = "Condition",
+     values_to = "Category"
+    )
 
+    genes_long$Group <- gsub("(atac|rna)_", "", genes_long$Condition)
+    genes_long$Modality <- gsub("(atac|rna)_.*", "\\1", genes_long$Condition)
+
+    genes_long$Group <- factor(genes_long$Group, levels = c("MGUS", "MM"))
+    genes_long$Modality <- factor(genes_long$Modality, levels = c("atac", "rna"))
+
+    genes_long <- genes_long[order(genes_long$Group, genes_long$Modality), ]
+    genes_long$Condition <- interaction(genes_long$Group, genes_long$Modality, sep = "_")
+
+    genes_long$Condition <- factor(genes_long$Condition, levels = unique(genes_long$Condition))
+
+    # Add spacer levels
+    genes_long$Display_Condition <- as.character(genes_long$Condition)
+    genes_long$Display_Condition <- factor(genes_long$Display_Condition,
+    levels = c(
+    "MGUS_atac", "MGUS_rna", "spacer1",
+    "MM_atac", "MM_rna"))
+
+# Plot
+
+        # Plot with spacer strata dropped
+    p <- ggplot(genes_long[!grepl("spacer", genes_long$Display_Condition), ], aes(
+     x = Display_Condition, stratum = Category, alluvium = Pair,
+     fill = Category, label = Category
+        )) +
+     geom_flow(stat = "alluvium", alpha = 0.8, aes(order = as.integer(Display_Condition))) +
+     geom_stratum() +
+    theme_classic() +
+    labs(x = NULL, y = "OCR-Gene Pairs Count") +
+    scale_fill_manual(values = c("Up-regulated" = "#D7342A", 
+                               "Down-regulated" = "#4475B3", 
+                               "Non-differential" = "#F0F0F0")) +
+    scale_x_discrete(drop = FALSE)
+    ggsave(paste0("Sankey_", model, ".pdf"), plot = p, width = 6, height = 4)
+
+}

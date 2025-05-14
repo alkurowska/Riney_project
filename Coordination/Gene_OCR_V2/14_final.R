@@ -270,68 +270,107 @@ dev.off()
 
 
 # summarize the number of genes in each category
-dynamics <- [,1:6]
+dynamics <- data_to_plot[,1:6]
 dynamics <- dynamics[!rownames(dynamics) %in% extra,]
+dim(dynamics) # 1441 x 6
+library(stringr)
+
+MGUS_up <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 1 & dynamics$MGUS_HC_rna == 1,]),"-",2)) # 114
+SMM_up <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$SMM_HC_atac == 1 & dynamics$SMM_HC_rna == 1,]),"-",2)) # 174
+MM_up <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MM_HC_atac == 1 & dynamics$MM_HC_rna == 1,]),"-",2)) # 387
+
+MGUS_down <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == -1 & dynamics$MGUS_HC_rna == -1,]),"-",2)) # 78
+SMM_down <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$SMM_HC_atac == -1 & dynamics$SMM_HC_rna == -1,]),"-",2)) # 335
+MM_down <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MM_HC_atac == -1 & dynamics$MM_HC_rna == -1,]),"-",2)) # 1033
+
+colnames(MGUS_up) <- c("peak_ID", "gene_ID")
+colnames(SMM_up) <- c("peak_ID", "gene_ID")
+colnames(MM_up) <- c("peak_ID", "gene_ID")
+colnames(MGUS_down) <- c("peak_ID", "gene_ID")
+colnames(SMM_down) <- c("peak_ID", "gene_ID")
+colnames(MM_down) <- c("peak_ID", "gene_ID")
+
+setwd("/ibex/user/kurowsaa/Riney_project/Coordination/Gene_OCR")
+saveRDS(MGUS_up, file = "MGUS_up.rds")
+saveRDS(SMM_up, file = "SMM_up.rds")
+saveRDS(MM_up, file = "MM_up.rds")
+saveRDS(MGUS_down, file = "MGUS_down.rds")
+saveRDS(SMM_down, file = "SMM_down.rds")
+saveRDS(MM_down, file = "MM_down.rds")
+
+
+MGUS_atac_up_rna_down <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 1 & dynamics$MGUS_HC_rna == -1,]),"-",2)) # 14
+SMM_atac_up_rna_down <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$SMM_HC_atac == 1 & dynamics$SMM_HC_rna == -1,]),"-",2)) # 16
+MM_atac_up_rna_down <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MM_HC_atac == 1 & dynamics$MM_HC_rna == -1,]),"-",2)) # 30
+
+colnames(MGUS_atac_up_rna_down) <- c("peak_ID", "gene_ID")
+colnames(SMM_atac_up_rna_down) <- c("peak_ID", "gene_ID")
+colnames(MM_atac_up_rna_down) <- c("peak_ID", "gene_ID")
+
+setwd("/ibex/user/kurowsaa/Riney_project/Coordination/Gene_OCR")
+saveRDS(MGUS_atac_up_rna_down, file = "MGUS_atac_up_rna_down.rds")
+saveRDS(SMM_atac_up_rna_down, file = "SMM_atac_up_rna_down.rds")
+saveRDS(MM_atac_up_rna_down, file = "MM_atac_up_rna_down.rds")
 
 # ATAC MGUS open, SMM open, MM open -> RNA MGUS up, SMM up, MM up
-nrow(dynamics[dynamics$MGUS_HC_atac == 1 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 1 & dynamics$SMM_HC_rna == 1 & dynamics$MM_HC_rna == 1,]) # 88
+group1 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 1 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 1 & dynamics$SMM_HC_rna == 1 & dynamics$MM_HC_rna == 1,]),"-",2)) # 88
 
 # ATAC MGUS open, SMM open, MM open -> RNA MGUS non, SMM up, MM up
-nrow(dynamics[dynamics$MGUS_HC_atac == 1 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 1 & dynamics$MM_HC_rna == 1,]) # 19
+group2 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 1 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 1 & dynamics$MM_HC_rna == 1,]),"-",2)) # 19
 
 # ATAC MGUS open, SMM open, MM open -> RNA MGUS non, SMM non, MM up
-nrow(dynamics[dynamics$MGUS_HC_atac == 1 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == 1,]) # 44
+group3 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 1 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == 1,]),"-",2)) # 44
 
 # ATAC MGUS non, SMM open, MM open -> RNA MGUS non, SMM up, MM up
-nrow(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 1 & dynamics$MM_HC_rna == 1,]) # 16
+group4 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 1 & dynamics$MM_HC_rna == 1,]),"-",2)) # 16
 
 # ATAC MGUS non, SMM open, MM open -> RNA MGUS non, SMM non, MM up
-nrow(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == 1,]) # 37
+group5 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == 1,]),"-",2)) # 37
 
 # ATAC MGUS non, SMM non, MM open -> RNA MGUS non, SMM non, MM up
-nrow(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == 0 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == 1,]) # 73
+group6 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == 0 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == 1,]),"-",2)) # 73
 
 
 
 # Same for down
 # ATAC MGUS down, SMM down, MM down -> RNA MGUS down, SMM down, MM down
-nrow(dynamics[dynamics$MGUS_HC_atac == -1 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == -1 & dynamics$SMM_HC_rna == -1 & dynamics$MM_HC_rna == -1,]) # 78
+group7 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == -1 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == -1 & dynamics$SMM_HC_rna == -1 & dynamics$MM_HC_rna == -1,]),"-",2)) # 78
 
-# ATAC MGUS down, SMM down, MM down -> RNA MGUS non, SMM down, MM down
-nrow(dynamics[dynamics$MGUS_HC_atac == -1 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == -1 & dynamics$MM_HC_rna == -1,]) # 119
+# ATAC MGUS down, SMM down, MM down -> RNA MGUS non, SMM down, MM down,"-",2)
+group8 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == -1 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == -1 & dynamics$MM_HC_rna == -1,]),"-",2)) # 119
 
 # ATAC MGUS down, SMM down, MM down -> RNA MGUS non, SMM non, MM down
-nrow(dynamics[dynamics$MGUS_HC_atac == -1 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == -1,]) # 138
+group9 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == -1 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == -1,]),"-",2)) # 138
 
 # ATAC MGUS non, SMM down, MM down -> RNA MGUS non, SMM down, MM down
-nrow(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == -1 & dynamics$MM_HC_rna == -1,]) # 77
+group10 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == -1 & dynamics$MM_HC_rna == -1,]),"-",2)) # 77
 
 # ATAC MGUS non, SMM down, MM down -> RNA MGUS non, SMM non, MM down
-nrow(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == -1,]) # 126
+group11 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == -1,]),"-",2)) # 126
 
 # ATAC MGUS non, SMM non, MM down -> RNA MGUS non, SMM non, MM down
-nrow(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == 0 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == -1,]) # 256
+group12 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == 0 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == -1,]),"-",2)) # 256
 
 
 
 # Mixed ATAC closing -> RNA up
 # ATAC MGUS down, SMM down, MM down -> RNA MGUS up, SMM up, MM up
-nrow(dynamics[dynamics$MGUS_HC_atac == -1 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 1 & dynamics$SMM_HC_rna == 1 & dynamics$MM_HC_rna == 1,]) # 16
+group19 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == -1 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 1 & dynamics$SMM_HC_rna == 1 & dynamics$MM_HC_rna == 1,]),"-",2)) # 16
 
 # ATAC MGUS down, SMM down, MM down -> RNA MGUS non, SMM up, MM up
-nrow(dynamics[dynamics$MGUS_HC_atac == -1 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 1 & dynamics$MM_HC_rna == 1,]) # 14
+group20 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == -1 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 1 & dynamics$MM_HC_rna == 1,]),"-",2)) # 14
 
 # ATAC MGUS down, SMM down, MM down -> RNA MGUS non, SMM non, MM up
-nrow(dynamics[dynamics$MGUS_HC_atac == -1 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == 1,]) # 57
+group21 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == -1 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == 1,]),"-",2)) # 57
 
 # ATAC MGUS non, SMM down, MM down -> RNA MGUS non, SMM up, MM up
-nrow(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 1 & dynamics$MM_HC_rna == 1,]) # 14
+group22 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 1 & dynamics$MM_HC_rna == 1,]),"-",2)) # 14
 
 # ATAC MGUS non, SMM down, MM down -> RNA MGUS non, SMM non, MM up
-nrow(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == 1,]) # 43
+group23 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == -1 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == 1,]),"-",2)) # 43
 
 # ATAC MGUS non, SMM non, MM down -> RNA MGUS non, SMM non, MM up
-nrow(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == 0 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == 1,]) # 95
+group24 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == 0 & dynamics$MM_HC_atac == -1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == 1,]),"-",2)) # 95
 
 
 
@@ -339,22 +378,22 @@ nrow(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == 0 & dynamics$
 # ATAC opening -> RNA down
 
 # ATAC MGUS open, SMM open, MM open -> RNA MGUS down, SMM down, MM down
-nrow(dynamics[dynamics$MGUS_HC_atac == 1 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == -1 & dynamics$SMM_HC_rna == -1 & dynamics$MM_HC_rna == -1,]) # 14
+group13 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 1 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == -1 & dynamics$SMM_HC_rna == -1 & dynamics$MM_HC_rna == -1,]),"-",2)) # 14
 
 # ATAC MGUS open, SMM open, MM open -> RNA MGUS non, SMM down, MM down
-nrow(dynamics[dynamics$MGUS_HC_atac == 1 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == -1 & dynamics$MM_HC_rna == -1,]) # 16
+group14 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 1 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == -1 & dynamics$MM_HC_rna == -1,]),"-",2)) # 16
 
 # ATAC MGUS open, SMM open, MM open -> RNA MGUS non, SMM non, MM down
-nrow(dynamics[dynamics$MGUS_HC_atac == 1 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == -1,]) # 30
+group15 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 1 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == -1,]),"-",2)) # 30
 
 # ATAC MGUS non, SMM open, MM open -> RNA MGUS non, SMM down, MM down
-nrow(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == -1 & dynamics$MM_HC_rna == -1,]) # 7
+group16 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == -1 & dynamics$MM_HC_rna == -1,]),"-",2)) # 7
 
 # ATAC MGUS non, SMM open, MM open -> RNA MGUS non, SMM non, MM down
-nrow(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == -1,]) # 28
+group17 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == 1 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == -1,]),"-",2)) # 28
 
 # ATAC MGUS non, SMM non, MM open -> RNA MGUS non, SMM non, MM down
-nrow(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == 0 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == -1,]) # 36
+group18 <- as.data.frame(str_split_fixed(rownames(dynamics[dynamics$MGUS_HC_atac == 0 & dynamics$SMM_HC_atac == 0 & dynamics$MM_HC_atac == 1 & dynamics$MGUS_HC_rna == 0 & dynamics$SMM_HC_rna == 0 & dynamics$MM_HC_rna == -1,]),"-",2)) # 36
 
 
 # sum all
@@ -430,3 +469,43 @@ ggplot(genes_long[!grepl("spacer", genes_long$Display_Condition), ], aes(
                                "Non-differential" = "#F0F0F0")) +
   scale_x_discrete(drop = FALSE)
 dev.off()
+
+
+
+
+
+colnames(group1) <- c("peak_ID", "gene_ID")
+colnames(group2) <- c("peak_ID", "gene_ID")
+colnames(group3) <- c("peak_ID", "gene_ID")
+colnames(group4) <- c("peak_ID", "gene_ID")
+colnames(group5) <- c("peak_ID", "gene_ID")
+colnames(group6) <- c("peak_ID", "gene_ID")
+colnames(group7) <- c("peak_ID", "gene_ID")
+colnames(group8) <- c("peak_ID", "gene_ID")
+colnames(group9) <- c("peak_ID", "gene_ID")
+colnames(group10) <- c("peak_ID", "gene_ID")
+colnames(group11) <- c("peak_ID", "gene_ID")
+colnames(group12) <- c("peak_ID", "gene_ID")
+colnames(group13) <- c("peak_ID", "gene_ID")
+colnames(group14) <- c("peak_ID", "gene_ID")
+colnames(group15) <- c("peak_ID", "gene_ID")
+colnames(group16) <- c("peak_ID", "gene_ID")
+colnames(group17) <- c("peak_ID", "gene_ID")
+colnames(group18) <- c("peak_ID", "gene_ID")
+colnames(group19) <- c("peak_ID", "gene_ID")
+colnames(group20) <- c("peak_ID", "gene_ID")
+colnames(group21) <- c("peak_ID", "gene_ID")
+colnames(group22) <- c("peak_ID", "gene_ID")
+colnames(group23) <- c("peak_ID", "gene_ID")
+colnames(group24) <- c("peak_ID", "gene_ID")
+
+
+setwd("/ibex/user/kurowsaa/Riney_project/Coordination/Gene_OCR")
+save(group1, group2, group3, group4, group5, group6, 
+     group7, group8, group9, group10, group11, group12,
+     group13, group14, group15, group16, group17, group18,
+     group19, group20, group21, group22, group23, group24, file = "OCR-gene_pairs_GROUPS.RData")
+
+
+
+

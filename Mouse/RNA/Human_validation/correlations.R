@@ -50,30 +50,38 @@ for(i in 1:nrow(orthologs)){
 }
 
 # For two contrasts: MGUS_HC and MM_HC make correlation of logFC between mouse and human homologs for each model separately
-# MGUS_HC # 137
-MGUSvsHC <- orthologs[orthologs$Human_ensembl_gene_id%in%MGUS_HC,c("MGUS_HC", "CyclinD1_MGUS_HC", "MIc_MGUS_HC", "Trp53_MGUS_HC", "Mmset_MGUS_HC")]
-dim(SMMvsHC) #338
-SMMvsHC <- orthologs[orthologs$Human_ensembl_gene_id%in%SMM_HC,c("SMM_HC", "CyclinD1_MM_HC", "MIc_MM_HC", "Trp53_MM_HC", "Mmset_MM_HC")]
+# MGUS_HC # 137"
+MGUSvsHC <- orthologs[orthologs$Human_ensembl_gene_id%in%MGUS_HC,c("Mouse_ensembl_gene_id", "MGUS_HC", "CyclinD1_MGUS_HC", "MIc_MGUS_HC", "Trp53_MGUS_HC", "Mmset_MGUS_HC")]
+
+SMMvsHC <- orthologs[orthologs$Human_ensembl_gene_id%in%SMM_HC,c("Mouse_ensembl_gene_id","SMM_HC", "CyclinD1_MM_HC", "MIc_MM_HC", "Trp53_MM_HC", "Mmset_MM_HC")]
 # MM_HC # 944
-MMvsHC <- orthologs[orthologs$Human_ensembl_gene_id%in%MM_HC,c("MM_HC", "CyclinD1_MM_HC", "MIc_MM_HC", "Trp53_MM_HC", "Mmset_MM_HC")]
+MMvsHC <- orthologs[orthologs$Human_ensembl_gene_id%in%MM_HC,c("Mouse_ensembl_gene_id","MM_HC", "CyclinD1_MM_HC", "MIc_MM_HC", "Trp53_MM_HC", "Mmset_MM_HC")]
+
+
 log_list <- list(
     MGUS_HC = MGUSvsHC,
     MM_HC = MMvsHC,
     SMM_HC = SMMvsHC
 )
-#SMM_HC 
-table(unique(orthologs$Human_ensembl_gene_id)%in%MGUS_HC)
 
 library(ggplot2)
+
+# Load the 85 overlapping orthologs 
+setwd("/ibex/user/kurowsaa/Riney_project/Mouse/RNA/DEA/")
+orthologs_85 <- read.table("orthologs_85.txt", sep = "\t", header = TRUE)
+
 # Function
-cor_plot <- function(toPlot, contrast, model) {
+cor_plot <- function(toPlot, contrast, model, names) {
     data <- toPlot
     rownames(data) <- 1:nrow(data)
     colnames(data) <- c("Human", "Mouse")
 
     correlation_coefficient <- cor(data$Human, data$Mouse, method = "spearman")
 
-    p <-  ggplot(data, aes(x = Human, y = Mouse)) +
+    # highlight the 85 overlapping orthologs
+    data$highlight <- ifelse(names %in% orthologs_85$Mouse_ensembl_gene_id, "yes", "no")
+
+    p <-  ggplot(data, aes(x = Human, y = Mouse, color = highlight )) +
             geom_point() +  # Plot points
             # add line in x = 0 
             geom_vline(xintercept = 0, color = "black") +
@@ -83,17 +91,24 @@ cor_plot <- function(toPlot, contrast, model) {
             ylab("Mouse") +
             xlim(-5, 5) +
             ylim(-5, 5) +
+            # remove legend
+            scale_color_manual(values = c("no" = "black", "yes" = "red")) +
             ggtitle(paste0("Correlation of log2FC - ", model)) +
-            theme_minimal()
+            theme_minimal() +
+            theme(legend.position = "none")
     ggsave(p, filename = paste0("correlation_",model,"_",contrast,".png"), width = 5, height = 5, dpi = 300)
     }
 
 setwd("/ibex/user/kurowsaa/Riney_project/Mouse/RNA/Human_validation")
 for(i in 1:length(log_list)) {
     contrast <- names(log_list)[i]
-    for(j in 1:(length(log_list[[i]])-1)) {
-        model <- gsub("_.*","",names(log_list[[i]])[1+j])
-        toPlot <- cbind(log_list[[i]][1], log_list[[i]][1+j])
-        cor_plot(toPlot, contrast, model)
+    for(j in 1:(length(log_list[[i]])-2)) {
+        model <- gsub("_.*","",names(log_list[[i]])[2+j])
+        toPlot <- cbind(log_list[[i]][2], log_list[[i]][2+j])
+        names <- log_list[[i]][,1]
+        cor_plot(toPlot, contrast, model, names)
     }
 }
+
+
+
